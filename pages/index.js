@@ -67,6 +67,8 @@ export default function Home() {
     fetcher
   );
 
+  console.log(data, "data");
+
   const { setUsers, search, sort, setSearch, setSort, getFilteredSortedUsers } =
     useUserStore();
 
@@ -228,12 +230,64 @@ export default function Home() {
             <DialogTitle>User Details</DialogTitle>
             <DialogContent>
               {selectedUser && (
-                <Box>
-                  <Typography variant="h6">{selectedUser.name}</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    @{selectedUser.username}
-                  </Typography>
-                  <Typography variant="body1">{selectedUser.email}</Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src="https://imgs.search.brave.com/PuFB9Y5WQMsiRnXkOjG-2jRmjPdoVfhnTfJkvHXB70o/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzE0LzA0LzMzLzE5/LzM2MF9GXzE0MDQz/MzE5MDdfTHR5UkVw/YnZEa2l0VFhiZmRN/V3hLWEZaSFF3NWlN/TWouanBn" // Provided image URL
+                    alt="Profile"
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                    }}
+                  />
+
+                  <Box>
+                    <Typography variant="h6">{selectedUser.name}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      @{selectedUser.username}
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedUser.email}
+                    </Typography>
+
+                    <Typography variant="body2">
+                      📞{" "}
+                      <a
+                        href={`tel:${selectedUser.phone}`}
+                        style={{ textDecoration: "none", color: "inherit" }}
+                      >
+                        {selectedUser.phone}
+                      </a>
+                    </Typography>
+
+                    <Typography variant="body2">
+                      🌐{" "}
+                      <a
+                        href={`https://${selectedUser.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ textDecoration: "none", color: "inherit" }}
+                      >
+                        {selectedUser.website}
+                      </a>
+                    </Typography>
+
+                    <Typography variant="body2">
+                      🏢 {selectedUser.company?.name}
+                    </Typography>
+                    <Typography variant="body2">
+                      📍 {selectedUser.address?.street},{" "}
+                      {selectedUser.address?.city}
+                    </Typography>
+                  </Box>
                 </Box>
               )}
             </DialogContent>
