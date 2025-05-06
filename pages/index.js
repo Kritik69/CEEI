@@ -184,7 +184,13 @@ export default function Home() {
           <Box
             sx={{
               display: isGridView ? "grid" : "block",
-              gridTemplateColumns: isGridView ? "repeat(3, 1fr)" : "none",
+              gridTemplateColumns: isGridView
+                ? {
+                    xs: "repeat(1, 1fr)",
+                    sm: "repeat(2, 1fr)",
+                    md: "repeat(3, 1fr)",
+                  }
+                : "none",
               gap: isGridView ? 2 : 0,
             }}
           >
