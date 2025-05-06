@@ -11,7 +11,15 @@ import {
   createTheme,
   Pagination,
   Box,
+  Switch,
+  FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
 } from "@mui/material";
+import { keyframes } from "@mui/system"; // Import keyframes from Material-UI
 
 import SearchBar from "../components/SearchBar";
 import SortDropdown from "../components/SortDropdown";
@@ -47,6 +55,12 @@ const lightTheme = createTheme({
   },
 });
 
+const backgroundAnimation = keyframes`
+  0% { background-color: #f8f9fa; } /* Light pastel color */
+  50% { background-color: #e8f5e9; } /* Soft green pastel */
+  100% { background-color: #f8f9fa; } /* Back to original */
+`;
+
 export default function Home() {
   const { data, error, isLoading } = useSWR(
     "https://jsonplaceholder.typicode.com/users",
@@ -57,13 +71,29 @@ export default function Home() {
     useUserStore();
 
   const [page, setPage] = useState(1);
-  const itemsPerPage = 5; // Change this to adjust pagination length
+  const itemsPerPage = 5;
+
+  const [showSplash, setShowSplash] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+  const [isGridView, setIsGridView] = useState(false);
+
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   useEffect(() => {
     if (data) {
       setUsers(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    const splashTimeout = setTimeout(() => {
+      setFadeOut(true);
+      setTimeout(() => setShowSplash(false), 1000);
+    }, 2000);
+
+    return () => clearTimeout(splashTimeout);
+  }, []);
 
   const users = getFilteredSortedUsers();
   const paginatedUsers = users.slice(
@@ -75,48 +105,146 @@ export default function Home() {
     setPage(value);
   };
 
+  const handleViewToggle = () => {
+    setIsGridView((prev) => !prev);
+  };
+
+  const handleUserClick = (user) => {
+    setSelectedUser(user);
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedUser(null);
+  };
+
   return (
     <ThemeProvider theme={lightTheme}>
       <CssBaseline />
-      <Container maxWidth="md" sx={{ mt: 5 }}>
-        <Typography variant="h4" align="center" gutterBottom>
-          Users
-        </Typography>
-
-        <SearchBar value={search} onChange={setSearch} />
-        <SortDropdown value={sort} onChange={setSort} />
-
-        {isLoading && <CircularProgress />}
-        {error && <Alert severity="error">Error fetching users</Alert>}
-
-        {paginatedUsers.map((user) => (
+      {showSplash ? (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "100vh",
+            backgroundColor: "#1976d2",
+            color: "#fff",
+            fontSize: "2rem",
+            fontWeight: "bold",
+            opacity: fadeOut ? 0 : 1,
+            transition: "opacity 1s ease-in-out",
+          }}
+        >
+          Loading...
+        </Box>
+      ) : (
+        <Container
+          maxWidth="md"
+          sx={{
+            mt: 5,
+            opacity: 1,
+            transition: "opacity 1s ease-in-out",
+            position: "relative",
+            // animation: `${backgroundAnimation} 10s infinite`,
+          }}
+        >
           <Box
-            key={user.id}
             sx={{
-              transition: "transform 0.3s ease, box-shadow 0.3s ease",
-              "&:hover": {
-                transform: "scale(1.02)",
-                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-              },
+              position: "absolute",
+              top: 16,
+              right: 16,
             }}
           >
-            <UserCard user={user} />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isGridView}
+                  onChange={handleViewToggle}
+                  color="primary"
+                />
+              }
+              label={isGridView ? "Grid View" : "List View"}
+            />
           </Box>
-        ))}
 
-        {users.length === 0 && !isLoading && !error && (
-          <Typography>No users found.</Typography>
-        )}
+          <Typography variant="h4" align="center" gutterBottom>
+            Users
+          </Typography>
 
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-          <Pagination
-            count={Math.ceil(users.length / itemsPerPage)}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-          />
-        </Box>
-      </Container>
+          <SearchBar value={search} onChange={setSearch} />
+          <SortDropdown value={sort} onChange={setSort} />
+
+          {isLoading && <CircularProgress />}
+          {error && <Alert severity="error">Error fetching users</Alert>}
+
+          <Box
+            sx={{
+              display: isGridView ? "grid" : "block",
+              gridTemplateColumns: isGridView ? "repeat(3, 1fr)" : "none",
+              gap: isGridView ? 2 : 0,
+            }}
+          >
+            {paginatedUsers.map((user) => (
+              <Box
+                key={user.id}
+                onClick={() => handleUserClick(user)}
+                sx={{
+                  cursor: "pointer",
+                  transition:
+                    "transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease",
+                  "&:hover": {
+                    transform: "scale(1.02)",
+                    boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                    filter: "invert(1)",
+                  },
+                }}
+              >
+                <UserCard user={user} isGridView={isGridView} />
+              </Box>
+            ))}
+          </Box>
+
+          {users.length === 0 && !isLoading && !error && (
+            <Typography>No users found.</Typography>
+          )}
+
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+            <Pagination
+              count={Math.ceil(users.length / itemsPerPage)}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+            />
+          </Box>
+
+          <Dialog
+            open={isDialogOpen}
+            onClose={handleCloseDialog}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle>User Details</DialogTitle>
+            <DialogContent>
+              {selectedUser && (
+                <Box>
+                  <Typography variant="h6">{selectedUser.name}</Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    @{selectedUser.username}
+                  </Typography>
+                  <Typography variant="body1">{selectedUser.email}</Typography>
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDialog} color="primary">
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Container>
+      )}
     </ThemeProvider>
   );
 }
